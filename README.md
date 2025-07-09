@@ -26,5 +26,34 @@ Nmap done: 1 IP address (1 host up) scanned in 559.42 seconds
 ```
 
 ```
+Hexada@hexada ~/pentest-env/pentesting-wordlists$ ffuf -w ./SecLists/Discovery/DNS/subdomains-top1million-110000.txt -u http://whiterabbit.htb -H "Host:FUZZ.whiterabbit.htb" -mc 200,302 -fs 0 
+
+
+        /'___\  /'___\           /'___\       
+       /\ \__/ /\ \__/  __  __  /\ \__/       
+       \ \ ,__\\ \ ,__\/\ \/\ \ \ \ ,__\      
+        \ \ \_/ \ \ \_/\ \ \_\ \ \ \ \_/      
+         \ \_\   \ \_\  \ \____/  \ \_\       
+          \/_/    \/_/   \/___/    \/_/       
+
+       v2.1.0
+________________________________________________
+
+ :: Method           : GET
+ :: URL              : http://whiterabbit.htb
+ :: Wordlist         : FUZZ: /home/Hexada/pentest-env/pentesting-wordlists/SecLists/Discovery/DNS/subdomains-top1million-110000.txt
+ :: Header           : Host: FUZZ.whiterabbit.htb
+ :: Follow redirects : false
+ :: Calibration      : false
+ :: Timeout          : 10
+ :: Threads          : 40
+ :: Matcher          : Response status: 200,302
+ :: Filter           : Response size: 0
+________________________________________________
+
+status                  [Status: 302, Size: 32, Words: 4, Lines: 1, Duration: 147ms]
+```
+
+```
 
 ```

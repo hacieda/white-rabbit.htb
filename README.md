@@ -191,4 +191,20 @@ SortableJS	1.14.0	  December 2021
 
 `Uptime Kuma v1.10–1.14`
 
+<img width="1920" height="949" alt="image" src="https://github.com/user-attachments/assets/6f14c7b3-9f96-4b2c-8d03-a4cd6529da2f" />
+
+```
+Hexada@hexada ~/pentest-env/pentesting-wordlists$ cat /etc/hosts                                                                                                                           
+# Static table lookup for hostnames.
+# See hosts(5) for details.
+
+127.0.0.1       localhost
+::1             localhost
+127.0.0.1       hexada.localdomain    hexada
+192.168.0.101   cyberia
+10.10.11.63     status.whiterabbit.htb   whiterabbit.htb   ddb09a8558c9.whiterabbit.htb   a668910b5514e.whiterabbit.htb
+```
+
+
+
 

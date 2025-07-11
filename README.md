@@ -205,6 +205,11 @@ Hexada@hexada ~/pentest-env/pentesting-wordlists$ cat /etc/hosts
 10.10.11.63     status.whiterabbit.htb   whiterabbit.htb   ddb09a8558c9.whiterabbit.htb   a668910b5514e.whiterabbit.htb
 ```
 
+<img width="1920" height="638" alt="image" src="https://github.com/user-attachments/assets/ad69ca07-9715-47d5-a446-9a9911bd3ce3" />
 
+<img width="1920" height="495" alt="image" src="https://github.com/user-attachments/assets/059328fa-395c-42cc-913d-abd5b2c82516" />
 
+<img width="1920" height="956" alt="image" src="https://github.com/user-attachments/assets/7c1dcd28-fcb3-463c-8f52-2e75507ce15d" />
+
+<img width="1920" height="653" alt="image" src="https://github.com/user-attachments/assets/a03061b4-308a-4f2e-b43e-181b9fdee320" />
 

@@ -93,42 +93,6 @@ X-Frame-Options: SAMEORIGIN
 ![image](https://github.com/user-attachments/assets/c4c27cbc-130b-4319-ab5f-561cf0fa8db9)
 
 ```
-xada@hexada ~/pentest-env/pentesting-wordlists$ ffuf -u http://status.whiterabbit.htb/FUZZ -w ./SecLists/Discovery/Web-Content/common.txt -e .php,.html,.js,.txt,.json -fs 2444 -ic
-
-        /'___\  /'___\           /'___\       
-       /\ \__/ /\ \__/  __  __  /\ \__/       
-       \ \ ,__\\ \ ,__\/\ \/\ \ \ \ ,__\      
-        \ \ \_/ \ \ \_/\ \ \_\ \ \ \ \_/      
-         \ \_\   \ \_\  \ \____/  \ \_\       
-          \/_/    \/_/   \/___/    \/_/       
-
-       v2.1.0
-________________________________________________
-
- :: Method           : GET
- :: URL              : http://status.whiterabbit.htb/FUZZ
- :: Wordlist         : FUZZ: /home/Hexada/pentest-env/pentesting-wordlists/SecLists/Discovery/Web-Content/common.txt
- :: Extensions       : .php .html .js .txt .json 
- :: Follow redirects : false
- :: Calibration      : false
- :: Timeout          : 10
- :: Threads          : 40
- :: Matcher          : Response status: 200-299,301,302,307,401,403,405,500
- :: Filter           : Response size: 2444
-________________________________________________
-
-.well-known/change-password [Status: 302, Size: 89, Words: 4, Lines: 1, Duration: 118ms]
-assets                  [Status: 301, Size: 179, Words: 7, Lines: 11, Duration: 61ms]
-favicon.ico             [Status: 200, Size: 15086, Words: 14, Lines: 4, Duration: 107ms]
-manifest.json           [Status: 200, Size: 415, Words: 147, Lines: 20, Duration: 83ms]
-robots.txt              [Status: 200, Size: 25, Words: 3, Lines: 2, Duration: 70ms]
-robots.txt              [Status: 200, Size: 25, Words: 3, Lines: 2, Duration: 74ms]
-screenshots             [Status: 301, Size: 189, Words: 7, Lines: 11, Duration: 175ms]
-upload                  [Status: 301, Size: 179, Words: 7, Lines: 11, Duration: 80ms]
-:: Progress: [28404/28404] :: Job [1/1] :: 363 req/sec :: Duration: [0:00:53] :: Errors: 0 ::
-```
-
-```
 Hexada@hexada ~/pentest-env/pentesting-wordlists$ ffuf -u http://status.whiterabbit.htb/FUZZ -w ./SecLists/Discovery/Web-Content/directory-list-2.3-medium.txt -e .php,.html,.js,.json,.txt -fs 2444 -ic
 
         /'___\  /'___\           /'___\       
@@ -212,4 +176,6 @@ Hexada@hexada ~/pentest-env/pentesting-wordlists$ cat /etc/hosts
 <img width="1920" height="956" alt="image" src="https://github.com/user-attachments/assets/7c1dcd28-fcb3-463c-8f52-2e75507ce15d" />
 
 <img width="1920" height="653" alt="image" src="https://github.com/user-attachments/assets/a03061b4-308a-4f2e-b43e-181b9fdee320" />
+
+<img width="1910" height="836" alt="image" src="https://github.com/user-attachments/assets/4a9ab965-30c0-4f20-a80f-8d9dada15311" />
 

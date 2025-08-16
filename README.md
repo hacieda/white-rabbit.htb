@@ -154,13 +154,41 @@ https://github.com/advisories/GHSA-2qgm-m29m-cj2h
 
 Может сработать только, если есть доступ к системе, потенциально возможно через сброс пароля: `npm run reset-password`
 
-<img width="1920" height="949" alt="image" src="https://github.com/user-attachments/assets/6f14c7b3-9f96-4b2c-8d03-a4cd6529da2f" />
+```
+Hexada@hexada ~/pentest-env/pentesting-wordlists$ ffuf -u http://status.whiterabbit.htb/status/FUZZ -w ./SecLists/Discovery/Web-Content/directory-list-2.3-medium.txt -e .php,.html,.js,.json,.txt.,xslx,.csv,.bak,.old,.zip,.tar,.gz,.env,.log,.conf -mc 200-299,301,302,307,401,403,404,405,500 -fs 2444 -ic -t 100
+
+        /'___\  /'___\           /'___\       
+       /\ \__/ /\ \__/  __  __  /\ \__/       
+       \ \ ,__\\ \ ,__\/\ \/\ \ \ \ ,__\      
+        \ \ \_/ \ \ \_/\ \ \_\ \ \ \ \_/      
+         \ \_\   \ \_\  \ \____/  \ \_\       
+          \/_/    \/_/   \/___/    \/_/       
+
+       v2.1.0
+________________________________________________
+
+ :: Method           : GET
+ :: URL              : http://status.whiterabbit.htb/status/FUZZ
+ :: Wordlist         : FUZZ: /home/Hexada/pentest-env/pentesting-wordlists/SecLists/Discovery/Web-Content/directory-list-2.3-medium.txt
+ :: Extensions       : .php .html .js .json .txt. xslx .csv .bak .old .zip .tar .gz .env .log .conf 
+ :: Follow redirects : false
+ :: Calibration      : false
+ :: Timeout          : 10
+ :: Threads          : 100
+ :: Matcher          : Response status: 200-299,301,302,307,401,403,404,405,500
+ :: Filter           : Response size: 2444
+________________________________________________
+
+temp                    [Status: 200, Size: 3359, Words: 304, Lines: 41, Duration: 86ms]
+```
+
+`/status` — это публичная страница, которая предназначена для отображения состояния сервисов (мониторов), которые админ выбрал как "доступные публично"
 
 https://github.com/louislam/uptime-kuma/wiki/Status-Page
 
-`/status` — это публичная страница, которая предназначена для отображения состояния сервисов (мониторов), которые админ выбрал как "доступные публично".
+<img width="1920" height="949" alt="image" src="https://github.com/user-attachments/assets/6f14c7b3-9f96-4b2c-8d03-a4cd6529da2f" />
 
-+ новый поддомены: `ddb09a8558c9.whiterabbit.htb`, `a668910b5514e.whiterabbit.htb`,
++ новый поддомены: `ddb09a8558c9.whiterabbit.htb`, `a668910b5514e.whiterabbit.htb`
 
 ```
 Hexada@hexada ~/pentest-env/pentesting-wordlists$ cat /etc/hosts                                                                                                                           
@@ -173,7 +201,6 @@ Hexada@hexada ~/pentest-env/pentesting-wordlists$ cat /etc/hosts
 192.168.0.101   cyberia
 10.10.11.63     status.whiterabbit.htb   whiterabbit.htb   ddb09a8558c9.whiterabbit.htb   a668910b5514e.whiterabbit.htb
 ```
-
 
 <img width="1920" height="653" alt="image" src="https://github.com/user-attachments/assets/a03061b4-308a-4f2e-b43e-181b9fdee320" />
 

@@ -53,7 +53,7 @@ ________________________________________________
 
 status                  [Status: 302, Size: 32, Words: 4, Lines: 1, Duration: 147ms]
 ```
-Поддомен статус возвращает статус реридекта, нужно посмотреть куда именно он нас направляет
+Поддомен возвращает статус реридекта, нужно посмотреть куда именно он нас направляет
 
 ```
 Hexada@hexada ~/pentest-env/pentesting-wordlists$ curl -I -H "Host: status.whiterabbit.htb" http://whiterabbit.htb                                                            
@@ -67,7 +67,7 @@ Vary: Accept
 X-Frame-Options: SAMEORIGIN
 ```
 
-В директорию `status.whiterabbit.htb/dashboard
+В директорию `status.whiterabbit.htb/dashboard`
 
 ![image](https://github.com/user-attachments/assets/a6cb4d1d-5422-464f-95d1-2f3bafa7e24e)
 
@@ -125,8 +125,6 @@ Robots.txt              [Status: 200, Size: 25, Words: 3, Lines: 2, Duration: 14
 manifest.json           [Status: 200, Size: 415, Words: 147, Lines: 20, Duration: 69ms]
 ```
 
-При удалённом доступе может быть полезно
-
 ```
 Hexada@hexada ~/pentest-env/pentesting-wordlists$ curl -I  http://status.whiterabbit.htb/.well-known/change-password                                                          
 HTTP/1.1 302 Found
@@ -139,7 +137,7 @@ Vary: Accept
 X-Frame-Options: SAMEORIGIN
 ```
 
-Примерная версия `Uptime Kuma v1.10–1.14`
+При удалённом доступе может быть полезно
 
 ```
 Bootstrap	5.1.3	  November 2021
@@ -148,6 +146,8 @@ Font Awesome	5.15.4	  October 2021
 vue-router	4.0.16	  January 2022
 SortableJS	1.14.0	  December 2021
 ```
+
+Приблизительная версия `Uptime Kuma v1.10–1.14`
 
 https://cvefeed.io/vuln/detail/CVE-2024-56331
 https://github.com/advisories/GHSA-2qgm-m29m-cj2h

